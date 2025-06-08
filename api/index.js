@@ -16,6 +16,16 @@ const server = http.createServer({}, async (req, res) => {
             }
         }
 
+        let subject = postmark.Subject;
+
+        // Get Tags
+        const match = subject.match(/tags:\s*([^)]+)/);
+        let tags = null;
+        if (match) {
+            tags = match ? match[1].trim().split(' ').filter(Boolean) : [];
+            subject = subject.replace(/\s*\(tags:.*\)/, '').trim();
+        }
+
         const devTo = await fetch("https://dev.to/api/articles", {
             method: "POST",
             headers: {
@@ -24,9 +34,10 @@ const server = http.createServer({}, async (req, res) => {
             },
             body: JSON.stringify({
                 "article": {
-                    "title": postmark.Subject || 'Draft',
+                    "title": subject || 'Draft',
                     "body_markdown": postmark.TextBody || 'Draft',
                     "published": true,
+                    "tags": tags ? tags.join(' ') : '#programming'
                 }
             }),
         });
@@ -34,7 +45,6 @@ const server = http.createServer({}, async (req, res) => {
         const responseDevTo = await devTo.json();
         const { url } = responseDevTo;
         const client = new postmarkEmail.ServerClient(process.env.POSTMARK_TOKEN);
-
 
         if (devTo.ok) {
             client.sendEmail({
