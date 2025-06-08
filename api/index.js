@@ -4,7 +4,7 @@ const server = http.createServer({}, async (req, res) => {
     try {
 
         const postmark = req.body || {};
-/*         console.log('Postmark data:', postmark);
+        console.log('Postmark data:', postmark);
 
         const devTo = await fetch("https://dev.to/api/articles", {
             method: "POST",
@@ -22,7 +22,7 @@ const server = http.createServer({}, async (req, res) => {
         });
 
         const responseDevTo = await devTo.json();
-        const { url } = responseDevTo;
+/*         const { url } = responseDevTo;
         const client = new postmark.ServerClient(process.env.POSTMARK_TOKEN);
 
         client.sendEmail({
@@ -33,7 +33,7 @@ const server = http.createServer({}, async (req, res) => {
         }); */
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': process.env.CORS_ORIGIN });
-        res.end(JSON.stringify(postmark));
+        res.end(JSON.stringify({responseDevTo}));
     } catch (error) {
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': process.env.CORS_ORIGIN });
         res.end(JSON.stringify({ error: error.message }));
