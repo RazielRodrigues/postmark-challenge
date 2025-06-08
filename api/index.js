@@ -1,10 +1,20 @@
 const http = require('node:http')
+const postmarkEmail = require("postmark");
 
 const server = http.createServer({}, async (req, res) => {
     try {
 
-        const postmark = req.body || {};
-        console.log('Postmark data:', postmark);
+        let body = '';
+        req.on('data', chunk => {body += chunk.toString();});
+        await new Promise(resolve => req.on('end', resolve));
+        let postmark = {};
+        if (body) {
+            try {
+                postmark = JSON.parse(body);
+            } catch (e) {
+                console.log('Failed to parse body:', e);
+            }
+        }
 
         const devTo = await fetch("https://dev.to/api/articles", {
             method: "POST",
@@ -22,15 +32,25 @@ const server = http.createServer({}, async (req, res) => {
         });
 
         const responseDevTo = await devTo.json();
-/*         const { url } = responseDevTo;
-        const client = new postmark.ServerClient(process.env.POSTMARK_TOKEN);
+        const { url } = responseDevTo;
+        const client = new postmarkEmail.ServerClient(process.env.POSTMARK_TOKEN);
 
-        client.sendEmail({
-            "From": process.env.SENDER_EMAIL,
-            "To": process.env.SENDER_EMAIL,
-            "Subject": "Article " + postmark.Subject + " Published successfuly!",
-            "TextBody": "Your article has been Published : " + url
-        }); */
+
+        if (devTo.ok) {
+            client.sendEmail({
+                "From": process.env.SENDER_EMAIL,
+                "To": process.env.SENDER_EMAIL,
+                "Subject": "Article " + postmark.Subject + " Published successfuly!",
+                "TextBody": "Your article has been Published : " + url
+            });
+        } else {
+            client.sendEmail({
+                "From": process.env.SENDER_EMAIL,
+                "To": process.env.SENDER_EMAIL,
+                "Subject": "Article " + postmark.Subject + " Publish error!",
+                "TextBody": "Some error happened to Publish the article : " + responseDevTo.error
+            });
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': process.env.CORS_ORIGIN });
         res.end(JSON.stringify({responseDevTo}));
