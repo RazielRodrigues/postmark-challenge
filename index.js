@@ -4,10 +4,9 @@ const server = http.createServer({}, async (req, res) => {
     try {
 
         const postmark = req.body || {};
-
         console.log('Postmark data:', postmark);
- 
-/*         const responseDevTo = await fetch("https://dev.to/api/articles", {
+
+        const responseDevTo = await fetch("https://dev.to/api/articles", {
             method: "POST",
             headers: {
                 "api-key": process.env.DEV_TO_TOKEN,
@@ -15,19 +14,27 @@ const server = http.createServer({}, async (req, res) => {
             },
             body: JSON.stringify({
                 "article": {
-                    "title": 'TESTE',
-                    "body_markdown": 'TESTE',
-                    "published": false,
+                    "title": postmark.Subject || 'Draft',
+                    "body_markdown": postmark.TextBody || 'Draft',
+                    "published": true,
                 }
             }),
         });
 
-        const responseData = await responseDevTo.json();  */
+        const { url } = await responseDevTo.json();
+        const client = new postmark.ServerClient(process.env.POSTMARK_TOKEN);
 
-        res.writeHead(200, {'Content-Type': 'application/json','Access-Control-Allow-Origin': '*'});
-        res.end(JSON.stringify(postmark));
+        client.sendEmail({
+            "From": process.env.SENDER_EMAIL,
+            "To": process.env.SENDER_EMAIL,
+            "Subject": "Article " + postmark.Subject + " Published successfuly!",
+            "TextBody": "Your article has been Published : " + url
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': process.env.CORS_ORIGIN });
+        res.end(JSON.stringify(responseData));
     } catch (error) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': process.env.CORS_ORIGIN });
         res.end(JSON.stringify({ error: error.message }));
     }
 });
