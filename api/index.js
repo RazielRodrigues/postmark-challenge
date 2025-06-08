@@ -22,7 +22,7 @@ const server = http.createServer({}, async (req, res) => {
         const match = subject.match(/tags:\s*([^)]+)/);
         let tags = null;
         if (match) {
-            tags = match ? match[1].trim().split(' ').filter(Boolean) : [];
+            tags = match[1].trim().split(' ').filter(Boolean).map(tag => tag.replace(/^#/, ''));
             subject = subject.replace(/\s*\(tags:.*\)/, '').trim();
         }
 
@@ -37,7 +37,7 @@ const server = http.createServer({}, async (req, res) => {
                     "title": subject || 'Draft',
                     "body_markdown": postmark.TextBody || 'Draft',
                     "published": true,
-                    "tags": tags ? tags.join(' ') : '#programming'
+                    "tags": tags
                 }
             }),
         });
